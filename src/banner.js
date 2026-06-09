@@ -16,7 +16,7 @@ const HAT =
 
 function showBanner() {
   console.log();
-  const title = chalk.hex('#e879f9').bold('cli-mage');
+  const title = chalk.hex('#e879f9').bold('cli-mage ✦');
   const sub   = chalk.hex('#6d28d9')('image → ascii');
   const lines = HAT.split('\n');
   lines.forEach((line, i) => {

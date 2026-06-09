@@ -116,4 +116,32 @@ async function toGif(frames, filePath, cellW = 6, cellH = 11) {
   fs.writeFileSync(filePath, Buffer.from(encoder.out.getData()));
 }
 
-module.exports = { toHtml, toSvg, toGif };
+// ── PNG / JPG ──────────────────────────────────────────────────────────────
+async function toImage(lines, filePath, cellW = 8, cellH = 16) {
+  const { Jimp } = require('jimp');
+
+  const cols = Math.max(...lines.map(l => l.cells.length));
+  const rows = lines.length;
+  const imgW = cols * cellW;
+  const imgH = rows * cellH;
+
+  const img = new Jimp({ width: imgW, height: imgH, color: 0x000000ff });
+
+  for (let row = 0; row < rows; row++) {
+    const { cells } = lines[row] || { cells: [] };
+    for (let col = 0; col < cols; col++) {
+      const cell = cells[col] || { ch: ' ', r: 0, g: 0, b: 0 };
+      if (cell.ch === ' ') continue;
+      const color = (cell.r << 24) | (cell.g << 16) | (cell.b << 8) | 0xff;
+      for (let py = 0; py < cellH; py++) {
+        for (let px = 0; px < cellW; px++) {
+          img.setPixelColor(color >>> 0, col * cellW + px, row * cellH + py);
+        }
+      }
+    }
+  }
+
+  await img.write(filePath);
+}
+
+module.exports = { toHtml, toSvg, toGif, toImage };

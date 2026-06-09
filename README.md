@@ -1,4 +1,6 @@
-# cli-mage
+![cli-mage](cli-mage.png)
+
+# cli-mage ✦
 
 A magical CLI tool that converts images to ASCII art in your terminal.
 
@@ -18,7 +20,11 @@ cli-mage <image> [options]
 cli-mage photo.png
 cli-mage photo.png --gradient
 cli-mage photo.png --braille -w 200
-cli-mage photo.png --gif mage.gif
+cli-mage photo.png --save mage.gif
+cli-mage photo.png --save mage.svg
+cli-mage photo.png --save mage.html
+cli-mage animation.gif
+cli-mage qr "https://yerettegroup.com"
 curl https://example.com/image.png | cli-mage
 ```
 
@@ -28,7 +34,7 @@ curl https://example.com/image.png | cli-mage
 
 | Flag | Description |
 |---|---|
-| `-w, --width <n>` | Output width in characters (default: terminal width) |
+| `-w, --width <n>` | Output width in characters (default: 100) |
 | `--no-color` | Disable color output |
 | `-i, --invert` | Invert brightness |
 | `-d, --detailed` | Use a larger, more detailed character set |
@@ -38,9 +44,23 @@ curl https://example.com/image.png | cli-mage
 | `--block` | Render using block characters ░▒▓█ |
 | `-a, --animate` | Animate in terminal — Ctrl+C to stop |
 | `-o, --output <file>` | Save plain-text output to file |
-| `--html mage.html` | Export as a colored HTML file |
-| `--svg mage.svg` | Export as an SVG file |
-| `--gif mage.gif` | Export as an animated GIF |
+| `--save <file>` | Save as `.html`, `.svg`, or `.gif` |
+
+---
+
+## QR Codes
+
+```
+cli-mage qr <text or URL> [options]
+```
+
+| Flag | Description |
+|---|---|
+| `--no-color` | Disable color output |
+| `-o, --output <file>` | Save plain-text output to file |
+| `--save <file>` | Save as `.html` or `.svg` |
+
+Works fully offline — no internet required.
 
 ---
 
@@ -52,7 +72,9 @@ curl https://example.com/image.png | cli-mage
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE).
+cli-mage is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+
+Contact: hello@yerettegroup.com
 
 ---
 

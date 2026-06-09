@@ -195,11 +195,23 @@ function readStdin() {
   });
 }
 
+// ── Load animated GIF frames via gifwrap ───────────────────────────────────
+async function loadGifFrames(srcPath, pixelWidth) {
+  const { GifUtil } = require('gifwrap');
+  const gif = await GifUtil.read(srcPath);
+  return gif.frames.map(frame => {
+    const img = new Jimp({ width: frame.bitmap.width, height: frame.bitmap.height });
+    img.bitmap.data = Buffer.from(frame.bitmap.data);
+    img.resize({ w: pixelWidth });
+    return { image: img, delayMs: (frame.delayCentisecs || 10) * 10 };
+  });
+}
+
 // ── Main entry point ───────────────────────────────────────────────────────
 async function convertImage(srcPath, options) {
   const {
     width, color = true, invert, detailed, gradient, edge,
-    braille, blockart, output, html, svg, gif, animate,
+    braille, blockart, output, save, animate,
   } = options;
 
   const useStdin = !srcPath && !process.stdin.isTTY;
@@ -208,7 +220,50 @@ async function convertImage(srcPath, options) {
   const label = useStdin ? '<stdin>' : path.basename(srcPath);
   console.log(chalk.hex('#a78bfa')('  ✦ Casting spell on: ') + chalk.white(label));
 
-  // Load once
+  const pixelWidth = Math.max(10, Math.min(braille ? width * 2 : width, 800));
+  const renderOpts = { color, invert, detailed, gradient, edge, braille, blockart };
+
+  // ── Animated GIF input ─────────────────────────────────────────────────
+  const isGifInput = !useStdin && srcPath.toLowerCase().endsWith('.gif');
+  if (isGifInput) {
+    let gifFrames;
+    try { gifFrames = await loadGifFrames(srcPath, pixelWidth); }
+    catch { throw new Error(`Cannot read GIF: ${srcPath}`); }
+
+    if (gifFrames.length > 1) {
+      // Render all frames up front
+      const rendered = gifFrames.map(({ image, delayMs }) => ({
+        lines: buildLines(image, renderOpts, 0),
+        delayMs,
+      }));
+
+      const displayWidth = gifFrames[0].image.bitmap.width;
+      const lineCount = rendered[0].lines.length + 4;
+      let frameIdx = 0;
+
+      printLines(rendered[0].lines, displayWidth);
+
+      const tick = () => {
+        frameIdx = (frameIdx + 1) % rendered.length;
+        const { lines, delayMs } = rendered[frameIdx];
+        process.stdout.write(`\x1b[${lineCount}A`);
+        printLines(lines, displayWidth);
+        setTimeout(tick, delayMs);
+      };
+      setTimeout(tick, rendered[0].delayMs);
+
+      process.on('SIGINT', () => {
+        process.stdout.write('\n');
+        console.log(chalk.hex('#a78bfa')('  ✦ Spell complete.\n'));
+        process.exit(0);
+      });
+      return;
+    }
+
+    // Single-frame GIF — fall through with that frame as rawImage
+  }
+
+  // ── Load static image ──────────────────────────────────────────────────
   let rawImage;
   if (useStdin) {
     rawImage = await Jimp.read(await readStdin());
@@ -216,11 +271,8 @@ async function convertImage(srcPath, options) {
     try { rawImage = await Jimp.read(srcPath); }
     catch { throw new Error(`Cannot read image: ${srcPath}`); }
   }
-
-  const pixelWidth = Math.max(10, Math.min(braille ? width * 2 : width, 800));
   rawImage.resize({ w: pixelWidth });
 
-  const renderOpts = { color, invert, detailed, gradient, edge, braille, blockart };
   const render = (phase = 0) => buildLines(rawImage, renderOpts, phase);
   const displayWidth = rawImage.bitmap.width;
 
@@ -260,29 +312,37 @@ async function convertImage(srcPath, options) {
     console.log();
   }
 
-  if (html) {
-    const { toHtml } = require('./exporters');
-    toHtml(lines, html, label);
-    console.log(chalk.hex('#a78bfa')('  ✦ HTML saved to: ') + chalk.white(html));
-    console.log();
+  if (save) {
+    await saveByExtension(lines, save, label, render);
+  }
+}
+
+async function saveByExtension(lines, filePath, label, render) {
+  const { toHtml, toSvg, toGif, toImage } = require('./exporters');
+  const ext = path.extname(filePath).toLowerCase();
+  const chalk = require('chalk');
+
+  switch (ext) {
+    case '.html':
+      toHtml(lines, filePath, label);
+      break;
+    case '.svg':
+      toSvg(lines, filePath, label);
+      break;
+    case '.gif':
+      console.log(chalk.hex('#a78bfa')('  ✦ Generating animated GIF...'));
+      await toGif(Array.from({ length: 24 }, (_, i) => render(i / 24)), filePath);
+      break;
+    default:
+      throw new Error(`Unsupported file type: ${ext}. Use .html, .svg, or .gif`);
   }
 
-  if (svg) {
-    const { toSvg } = require('./exporters');
-    toSvg(lines, svg, label);
-    console.log(chalk.hex('#a78bfa')('  ✦ SVG saved to: ') + chalk.white(svg));
-    console.log();
+  console.log(chalk.hex('#a78bfa')('  ✦ Saved to: ') + chalk.white(filePath));
+  if (ext === '.svg') {
+    console.log(chalk.dim('  To convert to PNG: inkscape mage.svg --export-filename=mage.png'));
+    console.log(chalk.dim('                  or: magick mage.svg mage.png'));
   }
-
-  if (gif) {
-    console.log(chalk.hex('#a78bfa')('  ✦ Generating animated GIF...'));
-    const { toGif } = require('./exporters');
-    const frames = Array.from({ length: 24 }, (_, i) => render(i / 24));
-    await toGif(frames, gif);
-    console.log(chalk.hex('#a78bfa')('  ✦ GIF saved to: ') + chalk.white(gif));
-    console.log();
-  }
-
+  console.log();
 }
 
 module.exports = { convertImage, buildLines };

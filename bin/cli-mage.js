@@ -6,6 +6,7 @@ const chalk = require('chalk');
 const path = require('path');
 const { showBanner } = require('../src/banner');
 const { convertImage } = require('../src/convert');
+const { generateQr } = require('../src/qr');
 
 async function run(imagePath, options) {
   showBanner();
@@ -25,14 +26,13 @@ async function run(imagePath, options) {
     console.log(chalk.dim('    --block              block characters ░▒▓█'));
     console.log(chalk.dim('    -a, --animate        animate in terminal'));
     console.log(chalk.dim('    -o, --output <f>     save plain text'));
-    console.log(chalk.dim('    --html mage.html     save HTML'));
-    console.log(chalk.dim('    --svg mage.svg       save SVG'));
-    console.log(chalk.dim('    --gif mage.gif       save animated GIF'));
+    console.log(chalk.dim('    --save <f>           save as .html .svg or .gif'));
     console.log();
+    console.log(chalk.hex('#a78bfa')('  QR code:') + chalk.white('  cli-mage qr "<text or URL>"\n'));
     return;
   }
 
-  const width = parseInt(options.width) || process.stdout.columns || 120;
+  const width = parseInt(options.width) || 100;
   const src = imagePath ? path.resolve(imagePath) : null;
 
   try {
@@ -43,12 +43,30 @@ async function run(imagePath, options) {
   }
 }
 
+// ── qr subcommand ──────────────────────────────────────────────────────────
+program
+  .command('qr <text>')
+  .description('generate a QR code for any text or URL')
+  .option('--no-color', 'disable color output')
+  .option('-o, --output <file>', 'save plain-text output to file')
+  .option('--save <file>', 'save as .html or .svg')
+  .action(async (text, options) => {
+    showBanner();
+    try {
+      await generateQr(text, options);
+    } catch (err) {
+      console.error(chalk.red(`\n  ✗ ${err.message}\n`));
+      process.exit(1);
+    }
+  });
+
+// ── default image-convert command ─────────────────────────────────────────
 program
   .name('cli-mage')
   .description('A magical CLI ASCII image art generator')
   .version('0.1.0')
   .argument('[image]', 'path to image file (omit to read from stdin)')
-  .option('-w, --width <number>', 'output width in characters', String(process.stdout.columns || 120))
+  .option('-w, --width <number>', 'output width in characters', '100')
   .option('--no-color', 'disable color output')
   .option('-i, --invert', 'invert brightness')
   .option('-d, --detailed', 'use detailed character set')
@@ -58,9 +76,7 @@ program
   .option('--block', 'render using block characters ░▒▓█')
   .option('-a, --animate', 'animate in terminal (Ctrl+C to stop)')
   .option('-o, --output <file>', 'save plain-text output to file')
-  .option('--html <file>', 'export colored HTML file')
-  .option('--svg <file>', 'export SVG file')
-  .option('--gif <file>', 'export animated GIF')
+  .option('--save <file>', 'save as .html .svg or .gif')
   .action(run);
 
 program.parse();
