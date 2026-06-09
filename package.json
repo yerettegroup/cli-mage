@@ -1,0 +1,20 @@
+{
+  "name": "cli-mage",
+  "version": "0.1.0",
+  "description": "A magical CLI ASCII image art generator",
+  "bin": {
+    "cli-mage": "./bin/cli-mage.js"
+  },
+  "scripts": {
+    "start": "node bin/cli-mage.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "gif-encoder-2": "^1.0.5",
+    "jimp": "^1.6.1"
+  }
+}
