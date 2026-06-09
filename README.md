@@ -1,4 +1,4 @@
-![cli-mage]
+![cli-mage](cli-mage.png)
 
 # cli-mage ✦
 
