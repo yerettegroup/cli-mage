@@ -52,4 +52,6 @@ curl https://example.com/image.png | cli-mage
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE).
+cli-mage is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+
+Contact: hello@yerettegroup.com
