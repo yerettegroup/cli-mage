@@ -1,6 +1,6 @@
 ```
     *
-   /|\  **cli-mage**
+   /|\  cli-mage
   /___\  image → ascii
 ```
 
