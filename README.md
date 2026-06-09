@@ -74,8 +74,6 @@ Works fully offline — no internet required.
 
 cli-mage is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
 
-Contact: hello@yerettegroup.com
+Contact: [hello@yerettegroup.com](mailto:hello@yerettegroup.com)
 
----
-
-*A [Yerette Group](https://github.com/yerettegroup) project.*
+![yerette](mage.svg)
